@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    container_name: blueprints_db
+    environment:
+      POSTGRES_DB: ${BP_DB_NAME:-blueprints}
+      POSTGRES_USER: ${BP_DB_USER:-blueprints_user}
+      POSTGRES_PASSWORD: ${BP_DB_PASSWORD:-blueprints_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - blueprints_data:/var/lib/postgresql/data
+
+volumes:
+  blueprints_data:

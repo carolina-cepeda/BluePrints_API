@@ -14,19 +14,19 @@ mvn spring-boot:run
 ```
 Probar con `curl`:
 ```bash
-curl -s http://localhost:8080/blueprints | jq
-curl -s http://localhost:8080/blueprints/john | jq
-curl -s http://localhost:8080/blueprints/john/house | jq
-curl -i -X POST http://localhost:8080/blueprints -H 'Content-Type: application/json' -d '{ "author":"john","name":"kitchen","points":[{"x":1,"y":1},{"x":2,"y":2}] }'
-curl -i -X PUT  http://localhost:8080/blueprints/john/kitchen/points -H 'Content-Type: application/json' -d '{ "x":3,"y":3 }'
+curl -s http://localhost:8081/blueprints | jq
+curl -s http://localhost:8081/blueprints/john | jq
+curl -s http://localhost:8081/blueprints/john/house | jq
+curl -i -X POST http://localhost:8081/blueprints -H 'Content-Type: application/json' -d '{ "author":"john","name":"kitchen","points":[{"x":1,"y":1},{"x":2,"y":2}] }'
+curl -i -X PUT  http://localhost:8081/blueprints/john/kitchen/points -H 'Content-Type: application/json' -d '{ "x":3,"y":3 }'
 ```
 
 > Si deseas activar filtros de puntos (reducción de redundancia, *undersampling*, etc.), implementa nuevas clases que implementen `BlueprintsFilter` y cámbialas por `IdentityFilter` con `@Primary` o usando configuración de Spring.
 ---
 
 Abrir en navegador:  
-- Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)  
-- OpenAPI JSON: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)  
+- Swagger UI: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)  
+- OpenAPI JSON: [http://localhost:8081/v3/api-docs](http://localhost:8081/v3/api-docs)  
 
 ---
 
@@ -55,9 +55,47 @@ src/main/java/edu/eci/arsw/blueprints
 - Analiza la capa `services` (`BlueprintsServices`) y el controlador `BlueprintsAPIController`.
 
 ### 2. Migración a persistencia en PostgreSQL
-- Configura una base de datos PostgreSQL (puedes usar Docker).  
-- Implementa un nuevo repositorio `PostgresBlueprintPersistence` que reemplace la versión en memoria.  
-- Mantén el contrato de la interfaz `BlueprintPersistence`.  
+
+La capa de persistencia ha sido migrada a **PostgreSQL** usando `JdbcTemplate`. Esta herramienta de Spring simplifica la interacción con la base de datos al gestionar el ciclo de vida de las conexiones y sentencias SQL, permitiendo un mapeo directo entre las filas de la base de datos y los objetos de dominio sin la complejidad de un ORM completo.
+
+
+#### 🐳 Configuración con Docker
+Para ejecutar la base de datos localmente usando Docker:
+
+1. **Iniciar el contenedor de base de datos:**
+   ```bash
+   docker-compose up -d
+   ```
+   Esto levantará una instancia de Postgres 14 en el puerto `5432` con la base de datos `blueprints`.
+
+2. **Detener la base de datos:**
+   ```bash
+   docker-compose down
+   ```
+
+#### Variables de Entorno
+El proyecto está configurado para usar las siguientes variables de entorno. Si no se definen, usará valores por defecto para desarrollo local (`blueprints_user` / `blueprints_password`):
+
+```markdown
+- **BP_DB_NAME**: Nombre de la BD (por defecto: `blueprints`).
+- **BP_DB_USER**: Usuario de la BD (por defecto: `blueprints_user`).
+- **BP_DB_PASSWORD**: Contraseña (por defecto: `blueprints_password`).
+```
+
+**Ejemplo de configuración en PowerShell:**
+```powershell
+$env:BP_DB_USER="mi_usuario_real"
+$env:BP_DB_PASSWORD="mi_secreto_seguro"
+docker-compose up -d
+mvn spring-boot:run
+```
+
+#### Verificación
+Para confirmar que los datos persisten:
+1. Crea un blueprint vía API.
+2. Reinicia la aplicación (`Ctrl+C` y `mvn spring-boot:run`).
+3. Consulta el blueprint nuevamente; debería seguir existiendo.
+  
 
 ### 3. Buenas prácticas de API REST
 - Cambia el path base de los controladores a `/api/v1/blueprints`.  
@@ -67,6 +105,7 @@ src/main/java/edu/eci/arsw/blueprints
   - `202 Accepted` (actualizaciones).  
   - `400 Bad Request` (datos inválidos).  
   - `404 Not Found` (recurso inexistente).  
+  
 - Implementa una clase genérica de respuesta uniforme:
   ```java
   public record ApiResponse<T>(int code, String message, T data) {}

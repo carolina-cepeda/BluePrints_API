@@ -1,6 +1,5 @@
 package edu.eci.arsw.blueprints.controllers;
 
-import java.util.Map;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
@@ -59,13 +58,17 @@ public class BlueprintsAPIController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No blueprints found for the given author", content = @Content)
         })
         @GetMapping("/{author}")
-        public ResponseEntity<?> byAuthor(@PathVariable String author) {
+        public ResponseEntity<ApiResponse<Object>> byAuthor(@PathVariable String author) {
                 try {
-                        return ResponseEntity.ok(services.getBlueprintsByAuthor(author));
+                        Set<Blueprint> blueprints = services.getBlueprintsByAuthor(author);
+                        return ResponseEntity.ok(new ApiResponse<>(
+                                        HttpStatus.OK.value(),
+                                        "Blueprints found for author: " + author,
+                                        blueprints));
                 } catch (BlueprintNotFoundException e) {
                         return ResponseEntity
                                         .status(HttpStatus.NOT_FOUND)
-                                        .body(Map.of("error", e.getMessage()));
+                                        .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), e.getMessage(), null));
                 }
         }
 
@@ -75,15 +78,19 @@ public class BlueprintsAPIController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Blueprint not found", content = @Content)
         })
         @GetMapping("/{author}/{bpname}")
-        public ResponseEntity<?> byAuthorAndName(
+        public ResponseEntity<ApiResponse<Blueprint>> byAuthorAndName(
                         @PathVariable String author,
                         @PathVariable String bpname) {
                 try {
-                        return ResponseEntity.ok(services.getBlueprint(author, bpname));
+                        Blueprint bp = services.getBlueprint(author, bpname);
+                        return ResponseEntity.ok(new ApiResponse<>(
+                                        HttpStatus.OK.value(),
+                                        "Blueprint found",
+                                        bp));
                 } catch (BlueprintNotFoundException e) {
                         return ResponseEntity
                                         .status(HttpStatus.NOT_FOUND)
-                                        .body(Map.of("error", e.getMessage()));
+                                        .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), e.getMessage(), null));
                 }
         }
 
@@ -93,17 +100,18 @@ public class BlueprintsAPIController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Blueprint could not be created (already exists or persistence error)", content = @Content)
         })
         @PostMapping
-        public ResponseEntity<?> add(@Valid @RequestBody NewBlueprintRequest req) {
+        public ResponseEntity<ApiResponse<Void>> add(@Valid @RequestBody NewBlueprintRequest req) {
                 try {
                         Blueprint bp = new Blueprint(req.author(), req.name(), req.points());
                         services.addNewBlueprint(bp);
                         return ResponseEntity
                                         .status(HttpStatus.CREATED)
-                                        .build();
+                                        .body(new ApiResponse<>(HttpStatus.CREATED.value(),
+                                                        "Blueprint created successfully", null));
                 } catch (BlueprintPersistenceException e) {
                         return ResponseEntity
                                         .status(HttpStatus.FORBIDDEN)
-                                        .body(Map.of("error", e.getMessage()));
+                                        .body(new ApiResponse<>(HttpStatus.FORBIDDEN.value(), e.getMessage(), null));
                 }
         }
 
@@ -113,7 +121,7 @@ public class BlueprintsAPIController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Blueprint not found", content = @Content)
         })
         @PutMapping("/{author}/{bpname}/points")
-        public ResponseEntity<?> addPoint(
+        public ResponseEntity<ApiResponse<Void>> addPoint(
                         @PathVariable String author,
                         @PathVariable String bpname,
                         @RequestBody Point p) {
@@ -121,11 +129,12 @@ public class BlueprintsAPIController {
                         services.addPoint(author, bpname, p.x(), p.y());
                         return ResponseEntity
                                         .status(HttpStatus.ACCEPTED)
-                                        .build();
+                                        .body(new ApiResponse<>(HttpStatus.ACCEPTED.value(), "Point added successfully",
+                                                        null));
                 } catch (BlueprintNotFoundException e) {
                         return ResponseEntity
                                         .status(HttpStatus.NOT_FOUND)
-                                        .body(Map.of("error", e.getMessage()));
+                                        .body(new ApiResponse<>(HttpStatus.NOT_FOUND.value(), e.getMessage(), null));
                 }
         }
 

@@ -119,10 +119,17 @@ Para confirmar que los datos persisten:
   }
   ```
 
+Se ha refactorizado la clase `BlueprintsAPIController` para que todos los endpoints utilicen consistentemente la clase `ApiResponse<T>`. Ahora tanto las respuestas exitosas (`200 OK`, `201 Created`, `202 Accepted`) como los errores controlados (`404 Not Found`, `403 Forbidden`) devuelven un objeto JSON con la estructura estándar `{code, message, data}`.
+![alt text](src/doc/apiResponse.png)
+
 ### 4. OpenAPI / Swagger
 - Configura `springdoc-openapi` en el proyecto.  
 - Expón documentación automática en `/swagger-ui.html`.  
 - Anota endpoints con `@Operation` y `@ApiResponse`.
+
+El proyecto cuenta con la dependencia `springdoc-openapi-starter-webmvc-ui` en el `pom.xml`. La clase `BlueprintsAPIController` tiene todos sus endpoints documentados con annotations `@Operation` (para descripciones) y `@ApiResponses` (para los códigos de estado).
+Se puede acceder a la documentación en: `http://localhost:8081/swagger-ui/index.html`
+![alt text](src/doc/swagger.png)
 
 ### 5. Filtros de *Blueprints*
 - Implementa filtros:

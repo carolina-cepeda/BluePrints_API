@@ -39,17 +39,21 @@ class BlueprintsSmokeTest {
 
     @Test
     void shouldCreateAndRetrieveBlueprint() throws Exception {
-        String jsonBlueprint = "{\"author\":\"test_user\",\"name\":\"test_bp\",\"points\":[{\"x\":10,\"y\":10}]}";
+        long timestamp = System.currentTimeMillis();
+        String author = "user_" + timestamp;
+        String name = "bp_" + timestamp;
+        String jsonBlueprint = String.format("{\"author\":\"%s\",\"name\":\"%s\",\"points\":[{\"x\":10,\"y\":10}]}",
+                author, name);
 
         mockMvc.perform(post("/blueprints")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonBlueprint))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/blueprints/test_user/test_bp"))
+        mockMvc.perform(get("/blueprints/" + author + "/" + name))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("test_user")))
-                .andExpect(content().string(containsString("test_bp")));
+                .andExpect(content().string(containsString(author)))
+                .andExpect(content().string(containsString(name)));
     }
 
     @Test

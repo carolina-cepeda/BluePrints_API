@@ -49,15 +49,28 @@ src/main/java/edu/eci/arsw/blueprints
 
 ## 📖 Actividades del laboratorio
 
+```markdown
 ### 1. Familiarización con el código base
 - Revisa el paquete `model` con las clases `Blueprint` y `Point`.  
 - Entiende la capa `persistence` con `InMemoryBlueprintPersistence`.  
 - Analiza la capa `services` (`BlueprintsServices`) y el controlador `BlueprintsAPIController`.
 
+
+- **`Blueprint` / `Point`**: Representan el modelo de dominio. Un plano se identifica por autor y nombre, y contiene una colección de puntos.
+
+- **`InMemoryBlueprintPersistence`**: Implementación de la persistencia que almacena los datos en memoria (usando un Map), facilitando pruebas rápidas sin base de datos.
+
+- **`BlueprintsServices`**: Capa de servicios que orquestra la lógica de negocio, conectando el controlador con la persistencia y aplicando filtros.
+
+- **`BlueprintsAPIController`**: Punto de entrada de la API REST que gestiona las peticiones HTTP y retorna respuestas en formato JSON.
+```
+
 ### 2. Migración a persistencia en PostgreSQL
 
 La capa de persistencia ha sido migrada a **PostgreSQL** usando `JdbcTemplate`. Esta herramienta de Spring simplifica la interacción con la base de datos al gestionar el ciclo de vida de las conexiones y sentencias SQL, permitiendo un mapeo directo entre las filas de la base de datos y los objetos de dominio sin la complejidad de un ORM completo.
 
+Se añadió un esquema en sql (schema.sql) para crear la base de datos y las tablas necesarias.A su vez, 
+se implementó la interfaz BlueprintPersistence en BlueprintPersistencePostgres, manteniendo operaciones CRUD que permiten alterar, crear, eliminar y consultar planos guardando esta información en la base de datos postgresql.
 
 #### 🐳 Configuración con Docker
 Para ejecutar la base de datos localmente usando Docker:
@@ -120,7 +133,8 @@ Para confirmar que los datos persisten:
   ```
 
 Se ha refactorizado la clase `BlueprintsAPIController` para que todos los endpoints utilicen consistentemente la clase `ApiResponse<T>`. Ahora tanto las respuestas exitosas (`200 OK`, `201 Created`, `202 Accepted`) como los errores controlados (`404 Not Found`, `403 Forbidden`) devuelven un objeto JSON con la estructura estándar `{code, message, data}` y mensajes con el contexto del proyecto.
-![alt text](src/doc/apiResponse.png)
+
+![alt text](doc/apiResponse.png)
 
 ### 4. OpenAPI / Swagger
 - Configura `springdoc-openapi` en el proyecto.  
@@ -129,13 +143,69 @@ Se ha refactorizado la clase `BlueprintsAPIController` para que todos los endpoi
 
 El proyecto cuenta con la dependencia `springdoc-openapi-starter-webmvc-ui` en el `pom.xml`. La clase `BlueprintsAPIController` tiene todos sus endpoints documentados con annotations `@Operation` (para descripciones) y `@ApiResponses` (para los códigos de estado).
 Se puede acceder a la documentación en: `http://localhost:8081/swagger-ui/index.html`
-![alt text](src/doc/swagger.png)
+![alt text](doc/swagger.png)
 
 ### 5. Filtros de *Blueprints*
 - Implementa filtros:
   - **RedundancyFilter**: elimina puntos duplicados consecutivos.  
   - **UndersamplingFilter**: conserva 1 de cada 2 puntos.  
 - Activa los filtros mediante perfiles de Spring (`redundancy`, `undersampling`).  
+
+## Activación de Filtros
+
+Para activar los filtros desde terminal se ejecutan los siguientes comandos en PowerShell o CMD dentro de la carpeta raíz del proyecto:
+
+* Filtro Redundancy  
+```bash
+  mvn spring-boot:run "-Dspring-boot.run.profiles=redundancy" 
+  ``` 
+  Elimina puntos duplicados consecutivos.
+
+* Filtro Undersampling  
+```bash
+  mvn spring-boot:run "-Dspring-boot.run.profiles=undersampling"  
+  ```
+  Conserva 1 de cada 2 puntos (índices 0, 2, 4...).
+
+* Filtro Default  
+```bash
+  mvn spring-boot:run  
+  ```
+  No aplica ningún filtro (Identity Filter).
+
+---
+
+## Activación desde application.properties
+
+También puedes activar un filtro editando el archivo src/main/resources/application .properties
+
+Modificando la línea:
+```bash
+spring.profiles.active=redundancy
+```
+Y reemplazando el valor por el perfil que se desee utilizar.
+
+## Pruebas en Swagger
+Para probar los filtros en swagger se hizo uso de los endpoints POST y GET.
+
+* Para el filtro redundancy se creó un blueprint con puntos duplicados consecutivos y se comprobó que se eliminaron los puntos duplicados consecutivos desde el GET.
+
+![alt text](doc/redundancyPost.png)
+
+![alt text](doc/redundancyGet.png)
+
+* Para el filtro undersampling se creó un blueprint con puntos consecutivos y se comprobó que se conservaron 1 de cada 2 puntos desde el GET.
+
+![alt text](doc/undersamplingPost.png)
+
+![alt text](doc/undersamplingGet.png) 
+
+
+## Evidencia de mensajes en la base de datos
+A continuación se observa como las operaciones hechas desde el swagger afectan de forma
+directa a la base de datos.
+
+![alt text](doc/db.png)
 
 ---
 

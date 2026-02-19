@@ -5,10 +5,12 @@ import org.springframework.stereotype.Component;
 
 /**
  * Default filter: returns the blueprint unchanged.
- * This matches the baseline behavior of the reference lab before students implement custom filters.
  */
 @Component
+@org.springframework.context.annotation.Profile("default")
 public class IdentityFilter implements BlueprintsFilter {
     @Override
-    public Blueprint apply(Blueprint bp) { return bp; }
+    public Blueprint apply(Blueprint bp) {
+        return bp;
+    }
 }

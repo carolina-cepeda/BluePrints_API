@@ -119,7 +119,7 @@ Para confirmar que los datos persisten:
   }
   ```
 
-Se ha refactorizado la clase `BlueprintsAPIController` para que todos los endpoints utilicen consistentemente la clase `ApiResponse<T>`. Ahora tanto las respuestas exitosas (`200 OK`, `201 Created`, `202 Accepted`) como los errores controlados (`404 Not Found`, `403 Forbidden`) devuelven un objeto JSON con la estructura estándar `{code, message, data}`.
+Se ha refactorizado la clase `BlueprintsAPIController` para que todos los endpoints utilicen consistentemente la clase `ApiResponse<T>`. Ahora tanto las respuestas exitosas (`200 OK`, `201 Created`, `202 Accepted`) como los errores controlados (`404 Not Found`, `403 Forbidden`) devuelven un objeto JSON con la estructura estándar `{code, message, data}` y mensajes con el contexto del proyecto.
 ![alt text](src/doc/apiResponse.png)
 
 ### 4. OpenAPI / Swagger

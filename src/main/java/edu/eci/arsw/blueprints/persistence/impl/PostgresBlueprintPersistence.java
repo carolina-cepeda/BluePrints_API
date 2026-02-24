@@ -111,4 +111,15 @@ public class PostgresBlueprintPersistence implements BlueprintPersistence {
         String sql = "INSERT INTO points (blueprint_author, blueprint_name, x, y) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(sql, author, name, x, y);
     }
+
+    @Override
+    public void deleteBlueprint(String author, String name) throws BlueprintNotFoundException {
+        getBlueprint(author, name); // verifica que existe, lanza excepción si no
+
+        String deletePoints = "DELETE FROM points WHERE blueprint_author = ? AND blueprint_name = ?";
+        jdbcTemplate.update(deletePoints, author, name);
+
+        String deleteBp = "DELETE FROM blueprints WHERE author = ? AND name = ?";
+        jdbcTemplate.update(deleteBp, author, name);
+    }
 }

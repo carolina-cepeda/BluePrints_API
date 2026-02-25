@@ -209,6 +209,99 @@ directa a la base de datos.
 
 ---
 
+# WebSocket con STOMP — Comunicación en Tiempo Real
+
+Se implementa comunicación en tiempo real usando **STOMP sobre WebSocket**, permitiendo que múltiples clientes
+colaboren en el mismo blueprint de forma sincronizada.
+
+---
+
+## Configuración del Broker STOMP
+
+**`WebSocketConfig.java`** habilita y configura el broker de mensajería:
+
+
+| Elemento | Valor | Descripción |
+|---|---|---|
+| Endpoint de conexión | `/ws-blueprints` | URL donde el cliente abre la conexión WebSocket |
+| Prefijo de suscripción | `/topic` | Canal  hacia los clientes |
+| Prefijo de envío | `/app` | Prefijo para mensajes que van al servidor |
+
+El cliente se conecta a `/ws-blueprints` y puede suscribirse a ciertos canales bajo `/topic/**` para recibir
+actualizaciones en tiempo real.
+
+---
+
+## Controller WebSocket — BlueprintsWSController
+
+Gestiona los mensajes entrantes y retransmite actualizaciones a todos los suscriptores del blueprint afectado.
+
+
+
+**Flujo de un mensaje:**
+
+```
+Cliente envía a /app/draw
+        │
+        ▼
+ handleDraw(DrawEvent)
+        │
+        ├── services.addPoint(...)   ← persiste el punto
+        │
+        └── template.convertAndSend(
+                "/topic/blueprints.<author>.<name>",
+                BlueprintUpdate
+            )                        ← broadcast a suscriptores
+```
+
+Cada blueprint tiene su propio tópico con el formato:
+```
+/topic/blueprints.{author}.{name}
+```
+Esto hace que solo los clientes viendo ese blueprint específico reciban las actualizaciones.
+
+---
+
+## DTOs utilizados
+
+### DrawEvent — Mensaje entrante
+
+Representa el evento que envía el cliente cuando dibuja un punto.
+
+```java
+record DrawEvent(String author, String name, Point point) {}
+```
+
+### BlueprintUpdate — Mensaje saliente
+
+Mensaje que el servidor retransmite a todos los clientes suscritos.
+```java
+record BlueprintUpdate(String author, String name, Point point) {}
+```
+
+Contiene la misma información del evento para que los clientes puedan renderizar el nuevo punto en el canvas compartido.
+
+---
+
+## Resumen del flujo completo
+
+```
+[Cliente A dibuja]
+      │
+      │  STOMP /app/draw  →  DrawEvent
+      ▼
+[BlueprintsWSController]
+      │
+      ├─ Persiste en BlueprintsServices
+      │
+      │  /topic/blueprints.author.name  →  BlueprintUpdate
+      ▼
+[Cliente A] ← recibe actualización
+[Cliente B] ← recibe la misma actualización
+[Cliente N] ← recibe la misma actualización
+```
+
+
 ## ✅ Entregables
 
 1. Repositorio en GitHub con:  
